@@ -38,7 +38,9 @@ class CProject(object):
     
     def get_ctrees(self):
         """
-        Returns a generator, yielding CTree objects.
+        Returns a generator, yielding dicts of CTree objects.
+        
+        Yields: {ctree.ID : CTree}
         """
         for name in os.listdir(self.projectfolder):
             ctree = CTree(self.projectfolder, name)
