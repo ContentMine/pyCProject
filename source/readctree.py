@@ -48,11 +48,8 @@ class CProject(object):
         """
         Returns size of dataset = number of ctrees.
         """
-        i = 0
-        for ct in self.get_ctrees():
-            # must loop through since get_ctrees() is a generator
-            i += 1
-        return i
+        # must loop through since get_ctrees() is a generator
+        return sum(1 for x in self.get_ctrees())
 
     def get_ctree(self, ctreeID):
         """
