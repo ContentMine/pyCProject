@@ -1,4 +1,4 @@
-#!/bin/env python2
+#!/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -38,13 +38,13 @@ class CProject(object):
     
     def get_ctrees(self):
         """
-        Returns a generator, yielding dicts of CTree objects.
+        Returns a generator, yielding CTree objects.
         
-        Yields: {ctree.ID : CTree}
+        Yields: CTree
         """
         for name in os.listdir(self.projectfolder):
             ctree = CTree(self.projectfolder, name)
-            yield {ctree.ID: ctree}
+            yield ctree
     
     def get_size(self):
         """
@@ -71,7 +71,6 @@ class CTree(object):
     Reads a CTREE within a CProject,
     and maps the CTree file structure to a data object.
     Provides some preprocessing and data access methods.
-
     self.ID = "string"
     self.shtmlpath = "path/to/scholarly.html"
     self.fulltextxmlpath = "path/to/fulltext.xml"
@@ -167,18 +166,17 @@ class CTree(object):
         """
         Returns ami-plugin results as a dictionary with
         {plugin-type: [list of results]}
-
         Args: plugin = "string", one of ["gene", "sequence", "regex", "species"]
-
         Returns: list of results
         """
         # catch entities request first, since not official plugin
         if plugin == "entities":
             return self.entities
         else:
-            assert plugin in self.available_plugins, \
-                    "%s is not available, run ami-%s first." %(plugin, plugin)
-            return self.results.get(plugin)
+            if not plugin in self.available_plugins:
+                print("%s is not available for %s, run ami-%s first." %(plugin, self.ID, plugin))
+            else:
+                return self.results.get(plugin)
     
     def get_soup(self):
         """
@@ -223,10 +221,8 @@ class CTree(object):
         """
         Finds tags containing a certain text,
         returns a list of BeautifulSoup tag objects.
-
         Args: tag = "string"
               text = "string"
-
         Returns: [bs4.tag, bs4.tag, bs4.tag3]
         """
         return self.get_soup().find_all(tag, text = re.compile(text))
@@ -235,10 +231,8 @@ class CTree(object):
         """
         Searches the scholarly.html for a specific tag,
         returns the text of the first instance found.
-
         Args: tag = "string"
               attr = {"attribute":"value"}
-
         Returns: "string"
         """
         text = [""]
@@ -257,7 +251,6 @@ class CTree(object):
         """
         Searches the scholarly.html for a section leading in with
         "Competing interests", returns the text following after.
-
         Returns: "string"
         """
         cis = []
@@ -275,7 +268,6 @@ class CTree(object):
         """
         Searches the scholarly.html for the attribute "abstract",
         returns the text.
-
         Returns: "string"
         """
         abstract = []
@@ -292,7 +284,6 @@ class CTree(object):
         """
         Searches the scholarly.html for the "title" tag,
         returns the corresponding string.
-
         Returns: "string"
         """
         return self.get_soup().find("title").string

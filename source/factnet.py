@@ -1,4 +1,4 @@
-#!/bin/env python2
+#!/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -40,28 +40,28 @@ def create_network(CProject, plugin, query):
               query = "string"
         
         Returns: (bipartite_graph, monopartite_graph, paper_nodes, fact_nodes)
-
         >>> bipartiteGraph, factGraph, paperNodes, factNodes = create_network(CProject, "species", "binomial")
         """
         
         B = nx.Graph()
         labels = {}
 
-        for ct in CProject.get_ctrees():
-            
-            ctree_ID, ctree = ct.items()[0]
+        for ctree in CProject.get_ctrees():
 
             results = ctree.show_results(plugin).get(query, [])
 
             if len(results) > 0:
-                B.add_node(ctree_ID, bipartite=0)
-                labels[str(ctree_ID)] = str(ctree_ID)
+                # add paper node to one side of the bipartite network
+                B.add_node(ctree.ID, bipartite=0)
+                labels[str(ctree.ID)] = str(ctree.ID)
 
                 for result in results:
-                    B.add_node(result, bipartite=1)
-                    labels[result] = result.encode("utf-8").decode("utf-8")
+                    exact = result.get("exact")
+                    # add fact node to other side of the bipartite network
+                    B.add_node(exact, bipartite=1)
+                    labels[exact] = exact.encode("utf-8").decode("utf-8")
                     # add a link between a paper and author
-                    B.add_edge(ctree_ID, result)
+                    B.add_edge(ctree.ID, exact)
 
         
         paper_nodes = set(n for n,d in B.nodes(data=True) if d['bipartite']==0)
