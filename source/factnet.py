@@ -165,5 +165,5 @@ def create_subgraph(cproject, B, G, target):
     
     return sg
 
-def save_graph(graph, color):
-    plotGraph(graph, color, figsize=(36, 23)).savefig("Your-Graph.png")
+def save_graph(graph, color, filename, figsize=(36, 24)):
+    plotGraph(graph, color, figsize=figsize).savefig("%s.png" %filename)
