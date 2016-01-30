@@ -48,7 +48,11 @@ def create_network(CProject, plugin, query):
 
         for ctree in CProject.get_ctrees():
 
-            results = ctree.show_results(plugin).get(query, [])
+            try:
+                results = ctree.show_results(plugin).get(query, [])
+            except AttributeError, e:
+                print(e)
+                continue
 
             if len(results) > 0:
                 # add paper node to one side of the bipartite network
