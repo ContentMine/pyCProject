@@ -50,8 +50,7 @@ def create_network(CProject, plugin, query):
 
             try:
                 results = ctree.show_results(plugin).get(query, [])
-            except AttributeError, e:
-                print(e)
+            except AttributeError:
                 continue
 
             if len(results) > 0:
