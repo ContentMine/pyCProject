@@ -37,21 +37,10 @@ class CProject(object):
         self.size = self.get_size()
     
     def get_ctrees(self):
-        """
-        Returns a generator, yielding CTree objects.
-        
-        Yields: CTree
-        """
-        for name in os.listdir(self.projectfolder):
-            ctree = CTree(self.projectfolder, name)
-            yield ctree
+        return iter(self)
     
     def get_size(self):
-        """
-        Returns size of dataset = number of ctrees.
-        """
-        # must loop through since get_ctrees() is a generator
-        return sum(1 for x in self.get_ctrees())
+        return len(self)
 
     def get_ctree(self, ctreeID):
         """
@@ -64,6 +53,23 @@ class CProject(object):
         Returns the title of a paper by its ID.
         """
         return self.get_ctree(ctreeID).get_title()
+
+    def __len__(self):
+        """
+        Returns size of dataset = number of ctrees.
+        """
+        # must loop through since get_ctrees() is a generator
+        return sum(1 for x in self.get_ctrees())
+
+    def __iter__(self):
+        """
+        Returns a generator, yielding CTree objects.
+
+        Yields: CTree
+        """
+        for name in os.listdir(self.projectfolder):
+            ctree = CTree(self.projectfolder, name)
+            yield ctree
 
     def __repr__(self):
         return '<CProject: {}>'.format(self.projectname)
