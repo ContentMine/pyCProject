@@ -65,6 +65,9 @@ class CProject(object):
         """
         return self.get_ctree(ctreeID).get_title()
 
+    def __repr__(self):
+        return '<CProject: {}>'.format(self.projectname)
+
         
 class CTree(object):
     """
@@ -287,3 +290,6 @@ class CTree(object):
         Returns: "string"
         """
         return self.get_soup().find("title").string
+
+    def __repr__(self):
+        return '<CTree: {}>'.format(self.ID)
