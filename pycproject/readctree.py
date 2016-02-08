@@ -67,9 +67,10 @@ class CProject(object):
 
         Yields: CTree
         """
-        for name in os.listdir(self.projectfolder):
-            ctree = CTree(self.projectfolder, name)
-            yield ctree
+        for dir_entry in os.scandir(self.projectfolder):
+            if dir_entry.is_dir():
+                ctree = CTree(self.projectfolder, dir_entry.name)
+                yield ctree
 
     def __repr__(self):
         return '<CProject: {}>'.format(self.projectname)
