@@ -169,4 +169,162 @@ def create_subgraph(cproject, B, G, target):
     return sg
 
 def save_graph(graph, color, filename, figsize=(36, 24)):
-    plotGraph(graph, color, figsize=figsize).savefig("%s.png" %filename)
+    plotGraph(graph, color, figsize=figsize).savefig("%s.svg" %filename)
+
+def create_complete_graph(CProject):
+    """
+    Creates a multipartite graph consisting of papers on the one hand,
+    and all facts of available plugin-results on the other hand.
+
+    Args: CProject
+    Returns: (bipartite_graph, monopartite_fact_graph, monopartite_paper_graph, paper_nodes, fact_nodes)
+    """
+        
+    partition_mapping = {"papers":0,
+                         "binomial":1, "genus":2, "genussp":3,
+                         "carb3":4, "prot3":5, "dna":6, "prot":7,
+                         "human":8}
+    
+    gene = ["human"]
+    species = ["binomial"]
+    sequence = ["dna", "prot"]
+    plugins = {"gene":gene, "species": species, "sequence":sequence}
+    
+    
+    M = nx.Graph()
+    labels = {}
+
+    for ctree in CProject.get_ctrees():
+
+        for plugin, types in plugins.items():
+            for ptype in types:
+        
+                try:
+                    results = ctree.show_results(plugin).get(ptype, [])
+                except AttributeError:
+                    continue
+
+                if len(results) > 0:
+                    source = " ".join(ctree.get_title().split())
+                    if not source in M.nodes():
+                        # add paper node to one side of the bipartite network
+                        M.add_node(source, bipartite=0)
+                        labels[str(source)] = str(source)
+
+                    for result in results:
+                        target = result.get("exact")
+                        # add fact node to other side of the bipartite network
+                        if not target in M.nodes():
+                            M.add_node(target, bipartite=1, ptype=ptype)
+                            labels[target] = target.encode("utf-8").decode("utf-8")
+                        # add a link between a paper and author
+                        M.add_edge(source, target)
+
+    paper_nodes = set(n for n,d in M.nodes(data=True) if d.get('bipartite')==0)
+    fact_nodes = set(M) - paper_nodes
+    G = bipartite.weighted_projected_graph(M, fact_nodes)
+    H = bipartite.weighted_projected_graph(M, paper_nodes)
+    
+    return M, G, H, paper_nodes, fact_nodes
+
+
+def plotMultipartiteGraph(M, figsize=(60, 40)):
+    partition_mapping = {"papers":0,
+                     "binomial":1, "genus":2, "genussp":3,
+                     "carb3":4, "prot3":5, "dna":6, "prot":7,
+                     "human":8}
+
+    gene = ["human"]
+    species = ["binomial"]
+    sequence = ["dna", "prot"]
+    plugins = {"gene":gene, "species": species, "sequence":sequence}
+    color_mapping={"papers":0,
+                    "binomial":"green", "genus":2, "genussp":3,
+                    "carb3":4, "prot3":5, "dna":"orange", "prot":"cyan",
+                    "human":"pink"}
+        
+    labels = {n:n for n in M.nodes()}
+    
+    d = nx.degree_centrality(M)
+    
+    layout=nx.spring_layout
+    pos=layout(M)
+
+    plt.figure(figsize=figsize)
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
+    
+    paper_nodes = set(n for n,d in M.nodes(data=True) if d.get('bipartite')==0)
+    # paper nodes
+    nx.draw_networkx_nodes(M,pos,
+                            nodelist=paper_nodes,
+                            node_color="blue",
+                            node_size=[v * 350 for v in d.values()],
+                            alpha=0.8)
+    
+    # nodes
+    for plugin, types in plugins.items():
+        for ptype in types:
+            fact_nodes = set(n for n,d in M.nodes(data=True) if d.get('ptype')==ptype)
+            nx.draw_networkx_nodes(M,pos,
+                                    nodelist=fact_nodes,
+                                    node_color=color_mapping.get(ptype),
+                                    node_size=[v * 350 for v in d.values()],
+                                    alpha=0.8)
+    
+    nx.draw_networkx_edges(M,pos,
+                           with_labels=True,
+                           edge_color="black",
+                           width=0.5
+                        )
+    
+    if M.order() < 1000:
+        nx.draw_networkx_labels(M,pos, labels)
+        
+    return plt
+
+
+def plot_all_facts(G, figsize=(60, 40)):
+    partition_mapping = {"papers":0,
+                     "binomial":1, "genus":2, "genussp":3,
+                     "carb3":4, "prot3":5, "dna":6, "prot":7,
+                     "human":8}
+
+    gene = ["human"]
+    species = ["binomial"]
+    sequence = ["dna", "prot"]
+    plugins = {"gene":gene, "species": species, "sequence":sequence}
+    color_mapping={"papers":0,
+                    "binomial":"green", "genus":2, "genussp":3,
+                    "carb3":4, "prot3":5, "dna":"orange", "prot":"cyan",
+                    "human":"pink"}
+        
+    labels = {n:n for n in G.nodes()}
+    
+    d = nx.degree_centrality(G)
+    
+    layout=nx.spring_layout
+    pos=layout(G)
+
+    plt.figure(figsize=figsize)
+    plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
+    
+    # nodes
+    for plugin, types in plugins.items():
+        for ptype in types:
+            fact_nodes = set(n for n,d in G.nodes(data=True) if d.get('ptype')==ptype)
+            nx.draw_networkx_nodes(G,pos,
+                                    nodelist=fact_nodes,
+                                    node_color=color_mapping.get(ptype),
+                                    node_size=[v * 350 for v in d.values()],
+                                    alpha=0.8)
+    
+    nx.draw_networkx_edges(G,pos,
+                           with_labels=True,
+                           edge_color="black",
+                           width=0.5
+                        )
+    
+    if G.order() < 1000:
+        nx.draw_networkx_labels(G,pos, labels)
+        
+    return plt

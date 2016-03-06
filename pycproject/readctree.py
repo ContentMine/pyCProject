@@ -54,6 +54,19 @@ class CProject(object):
         """
         return self.get_ctree(ctreeID).get_title()
 
+    def get_results(self):
+        """
+        Iterates over all results, yields content of results.xml as dict,
+        plus name of ami-plugin and the plugin-type.
+        """
+        for ctree in iter(self):
+            for plugin, types in ctree.results.items():
+                for ptype, results in types.items():
+                    for result in results:
+                        result["plugin"] = plugin
+                        result["type"] = ptype
+                        yield result
+
     def __len__(self):
         """
         Returns size of dataset = number of ctrees.
@@ -106,7 +119,7 @@ class CTree(object):
     
     def _load_entities(self):
         """
-        Tries to lead entities, returns {} if none found.
+        Tries to load entities, returns {} if none found.
         """
         try:
             with open(os.path.join(os.getcwd(), self.path, "entities"), "r") as dumpfile:
@@ -139,7 +152,8 @@ class CTree(object):
         queries that have been run.
         {'regex': set(['clintrialids']), 
         'gene': set(['human']), 
-        'sequence': set(['carb3', 'prot3', 'dna', 'prot'])}
+        'sequence': set(['carb3', 'prot3', 'dna', 'prot']),
+        'species': set(['binomial', 'genus', 'genussp'])}
         """
         return {plugin:set(os.listdir(os.path.join(self.resultspath, plugin))) 
             for plugin in self.available_plugins}
