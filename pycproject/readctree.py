@@ -11,6 +11,7 @@ import re
 import os
 from lxml import etree
 import json
+from collections import Counter
 
 # import data handling
 from bs4 import BeautifulSoup
@@ -209,6 +210,10 @@ class CTree(object):
         with open(self.shtmlpath, "r") as infile:
             return BeautifulSoup(infile)
     
+    def get_fulltext_xml(self):
+        with open(self.fulltextxmlpath, "r") as infile:
+            return etree.parse(infile)
+
     def get_section(self, section_title):
         """
         Returns a section of shtml.
@@ -237,6 +242,25 @@ class CTree(object):
             for author in meta.find_all("meta", {"name":"citation_author"}):
                 authors.append(author.get("content"))
         return authors
+
+    def get_keywords(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        keywords = []
+        return keywords
+
+    def get_institutions(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        institutions = []
+        return institutions
+
+    def get_journal(self):
+        return self.get_fulltext_xml().getroot().xpath("//journal-title/text()")[0]
     
     def get_acknowledgements(self):
         return self.get_section("Acknowledgements")
@@ -310,7 +334,17 @@ class CTree(object):
         returns the corresponding string.
         Returns: "string"
         """
-        return self.get_soup().find("title").string
+        return self.get_fulltext_xml().getroot().xpath("//article-title/text()")[0]
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
+
+    def get_classifier_features(self):
+        features = {}
+        features["authors"] = self.get_authors()
+        features["title"] = self.get_title()
+        features["keywords"] = self.get_keywords()
+        features["institutions"] = self.get_institutions()
+        features["journal"] = self.get_journal()
+        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
+        return features
