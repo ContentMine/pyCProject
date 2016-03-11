@@ -82,7 +82,7 @@ class CProject(object):
         Yields: CTree
         """
         for dir_entry in os.listdir(self.projectfolder):
-            if dir_entry.is_dir():
+            if os.path.isdir(dir_entry):
                 ctree = CTree(self.projectfolder, dir_entry.name)
                 yield ctree
 
