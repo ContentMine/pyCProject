@@ -81,7 +81,7 @@ class CProject(object):
 
         Yields: CTree
         """
-        for dir_entry in os.scandir(self.projectfolder):
+        for dir_entry in os.listdir(self.projectfolder):
             if dir_entry.is_dir():
                 ctree = CTree(self.projectfolder, dir_entry.name)
                 yield ctree
@@ -141,7 +141,9 @@ class CTree(object):
         ['sequence', 'regex', 'gene']
         """
         try:
-            return os.listdir(self.resultspath)
+            folders = os.listdir(self.resultspath)
+            folders = [f for f in folders if os.path.isdir(f)]
+            return folders
         except:
             # needs logging of missing plugin-results
             return []
