@@ -81,7 +81,7 @@ class CProject(object):
 
         Yields: CTree
         """
-        for dir_entry in os.scandir(self.projectfolder):
+        for dir_entry in os.listdir(self.projectfolder):
             if dir_entry.is_dir():
                 ctree = CTree(self.projectfolder, dir_entry.name)
                 yield ctree
@@ -141,7 +141,9 @@ class CTree(object):
         ['sequence', 'regex', 'gene']
         """
         try:
-            return os.listdir(self.resultspath)
+            folders = os.listdir(self.resultspath)
+            folders = [f for f in folders if os.path.isdir(f)]
+            return folders
         except:
             # needs logging of missing plugin-results
             return []
@@ -203,12 +205,12 @@ class CTree(object):
             else:
                 return self.results.get(plugin)
     
-    def get_soup(self):
+    def get_shtml(self):
         """
         Returns the scholarly.html as a BeautifulSoup object.
         """
         with open(self.shtmlpath, "r") as infile:
-            return BeautifulSoup(infile)
+            return BeautifulSoup(infile, "lxml")
     
     def get_fulltext_xml(self):
         with open(self.fulltextxmlpath, "r") as infile:
@@ -219,7 +221,7 @@ class CTree(object):
         Returns a section of shtml.
         """
         section = []
-        for sec in self.get_soup().find_all():
+        for sec in self.get_shtml().find_all():
             if sec.string == section_title:
                 for sib in sec.next_siblings:
                     section.append(sib.string)
@@ -237,10 +239,10 @@ class CTree(object):
         returns a list of authors.
         """
         authors = []
-        contrib_group = self.get_soup().find_all("div", {"tagx":"contrib-group"})
-        for meta in contrib_group:
-            for author in meta.find_all("meta", {"name":"citation_author"}):
-                authors.append(author.get("content"))
+        contrib_group = self.get_shtml().find_all("div", {"class":"contrib-group"})
+        for contrib in contrib_group:
+            for author in contrib.find_all("span", {"class":"citation_author"}):
+                authors.append(author.string)
         return authors
 
     def get_keywords(self):
@@ -248,7 +250,7 @@ class CTree(object):
         Searches the scholarly.html for the contrib-group tag,
         returns a list of authors.
         """
-        keywords = []
+        keywords = [kwd.text for kwd in self.get_fulltext_xml().getroot().xpath("//kwd")]
         return keywords
 
     def get_institutions(self):
@@ -273,7 +275,7 @@ class CTree(object):
               text = "string"
         Returns: [bs4.tag, bs4.tag, bs4.tag3]
         """
-        return self.get_soup().find_all(tag, text = re.compile(text))
+        return self.get_shtml().find_all(tag, text = re.compile(text))
     
     def find_tag(self, tag, attr=None):
         """
@@ -285,9 +287,9 @@ class CTree(object):
         """
         text = [""]
         if attr is not None:
-            tags = self.get_soup().find(tag, attr)
+            tags = self.get_shtml().find(tag, attr)
         else:
-            tags = self.get_soup().find(tag)
+            tags = self.get_shtml().find(tag)
         if tags:
             for p in tags.find_all("p"):
                 if p.string:
@@ -319,7 +321,7 @@ class CTree(object):
         Returns: "string"
         """
         abstract = []
-        for ab in self.get_soup().find_all("div", {"tag":"abstract"}):
+        for ab in self.get_shtml().find_all("div", {"tag":"abstract"}):
             for p in ab.find_all("p"):
                 abstract.append(p.string)
         try:
@@ -344,7 +346,6 @@ class CTree(object):
         features["authors"] = self.get_authors()
         features["title"] = self.get_title()
         features["keywords"] = self.get_keywords()
-        features["institutions"] = self.get_institutions()
         features["journal"] = self.get_journal()
         features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
         return features
