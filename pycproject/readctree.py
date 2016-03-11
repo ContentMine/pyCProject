@@ -11,6 +11,7 @@ import re
 import os
 from lxml import etree
 import json
+from collections import Counter
 
 # import data handling
 from bs4 import BeautifulSoup
@@ -53,6 +54,19 @@ class CProject(object):
         Returns the title of a paper by its ID.
         """
         return self.get_ctree(ctreeID).get_title()
+
+    def get_results(self):
+        """
+        Iterates over all results, yields content of results.xml as dict,
+        plus name of ami-plugin and the plugin-type.
+        """
+        for ctree in iter(self):
+            for plugin, types in ctree.results.items():
+                for ptype, results in types.items():
+                    for result in results:
+                        result["plugin"] = plugin
+                        result["type"] = ptype
+                        yield result
 
     def __len__(self):
         """
@@ -106,7 +120,7 @@ class CTree(object):
     
     def _load_entities(self):
         """
-        Tries to lead entities, returns {} if none found.
+        Tries to load entities, returns {} if none found.
         """
         try:
             with open(os.path.join(os.getcwd(), self.path, "entities"), "r") as dumpfile:
@@ -139,7 +153,8 @@ class CTree(object):
         queries that have been run.
         {'regex': set(['clintrialids']), 
         'gene': set(['human']), 
-        'sequence': set(['carb3', 'prot3', 'dna', 'prot'])}
+        'sequence': set(['carb3', 'prot3', 'dna', 'prot']),
+        'species': set(['binomial', 'genus', 'genussp'])}
         """
         return {plugin:set(os.listdir(os.path.join(self.resultspath, plugin))) 
             for plugin in self.available_plugins}
@@ -195,6 +210,10 @@ class CTree(object):
         with open(self.shtmlpath, "r") as infile:
             return BeautifulSoup(infile)
     
+    def get_fulltext_xml(self):
+        with open(self.fulltextxmlpath, "r") as infile:
+            return etree.parse(infile)
+
     def get_section(self, section_title):
         """
         Returns a section of shtml.
@@ -223,6 +242,25 @@ class CTree(object):
             for author in meta.find_all("meta", {"name":"citation_author"}):
                 authors.append(author.get("content"))
         return authors
+
+    def get_keywords(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        keywords = []
+        return keywords
+
+    def get_institutions(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        institutions = []
+        return institutions
+
+    def get_journal(self):
+        return self.get_fulltext_xml().getroot().xpath("//journal-title/text()")[0]
     
     def get_acknowledgements(self):
         return self.get_section("Acknowledgements")
@@ -296,7 +334,17 @@ class CTree(object):
         returns the corresponding string.
         Returns: "string"
         """
-        return self.get_soup().find("title").string
+        return self.get_fulltext_xml().getroot().xpath("//article-title/text()")[0]
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
+
+    def get_classifier_features(self):
+        features = {}
+        features["authors"] = self.get_authors()
+        features["title"] = self.get_title()
+        features["keywords"] = self.get_keywords()
+        features["institutions"] = self.get_institutions()
+        features["journal"] = self.get_journal()
+        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
+        return features
