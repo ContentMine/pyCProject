@@ -137,13 +137,11 @@ class CTree(object):
     
     def _get_plugins(self):
         """
-        Returns a dict of available ami-plugin-results.
+        Returns a list of available ami-plugin-results.
         ['sequence', 'regex', 'gene']
         """
         try:
-            folders = os.listdir(self.resultspath)
-            folders = [f for f in folders if os.path.isdir(f)]
-            return folders
+            return os.listdir(self.resultspath)
         except:
             # needs logging of missing plugin-results
             return []
@@ -342,10 +340,31 @@ class CTree(object):
         return '<CTree: {}>'.format(self.ID)
 
     def get_classifier_features(self):
+        """
+        Yields feature dictionaries:
+
+        {'ID': ['PMC4427447'],
+          'authors': ['Kraisak Kesorn',
+           'Phatsavee Ongruk',
+           'Jakkrawarn Chompoosri',
+           'Atchara Phumee',
+           'Usavadee Thavara',
+           'Apiwat Tawatsin',
+           'Padet Siriyasatien'],
+          'binomial': [('Ae. aegypti', 20),
+           ('Aedes aegypti', 2),
+           ('Model construction', 1),
+           ('Data integration', 1)],
+          'journal': ['PLoS ONE'],
+          'keywords': [],
+          'title': ['Morbidity Rate Prediction of Dengue Hemorrhagic Fever (DHF) Using the Support Vector Machine and the ']
+        }
+        """
         features = {}
         features["authors"] = self.get_authors()
-        features["title"] = self.get_title()
+        features["title"] = [self.get_title()]
         features["keywords"] = self.get_keywords()
-        features["journal"] = self.get_journal()
-        #features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
+        features["journal"] = [self.get_journal()]
+        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")]).most_common(5)
+        features["ID"] = [self.ID]
         return features
