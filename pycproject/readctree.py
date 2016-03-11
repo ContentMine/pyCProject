@@ -82,8 +82,8 @@ class CProject(object):
         Yields: CTree
         """
         for dir_entry in os.listdir(self.projectfolder):
-            if os.path.isdir(dir_entry):
-                ctree = CTree(self.projectfolder, dir_entry.name)
+            if os.path.isdir(os.path.join(self.projectfolder, dir_entry)):
+                ctree = CTree(self.projectfolder, dir_entry)
                 yield ctree
 
     def __repr__(self):
@@ -347,5 +347,5 @@ class CTree(object):
         features["title"] = self.get_title()
         features["keywords"] = self.get_keywords()
         features["journal"] = self.get_journal()
-        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
+        #features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")])
         return features
