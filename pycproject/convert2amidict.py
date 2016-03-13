@@ -5,8 +5,6 @@
 Converts a single-column CSV into ami-dictionary XML-format.
 """
 
-
-import community
 import argparse
 import os
 import csv
