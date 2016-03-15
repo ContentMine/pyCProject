@@ -130,10 +130,39 @@ class CTree(object):
             return {}
     
     def _get_shtmlpath(self):
-        return os.path.join(self.path, "scholarly.html")
+        shtmlpath = os.path.join(self.path, "scholarly.html")
+        if os.path.isfile(shtmlpath):
+            return shtmlpath
+        else:
+            # self.log("Missing scholarly.html")
+            return None
     
     def _get_fxmlpath(self):
-        return os.path.join(self.path, "fulltext.xml")
+        fxmlpath = os.path.join(self.path, "fulltext.xml")
+        if os.path.isfile(fxmlpath):
+            return fxmlpath
+        else:
+            # self.log("Missing fulltext.xml")
+            return None
+    
+    def get_shtml(self):
+        """
+        Returns the scholarly.html as a BeautifulSoup object.
+        """
+        if self.shtmlpath:
+            with open(self.shtmlpath, "r") as infile:
+                return BeautifulSoup(infile, "lxml")
+        else:
+            # self.log("Missing scholarly.html")
+            return None
+    
+    def get_fulltext_xml(self):
+        if self.fulltextxmlpath:
+            with open(self.fulltextxmlpath, "r") as infile:
+                return etree.parse(infile)
+        else:
+            # self.log("Missing fulltext.xml")
+            return None
     
     def _get_plugins(self):
         """
@@ -172,6 +201,16 @@ class CTree(object):
                                                                  "results.xml"))
         return results
         
+    def get_pdate(self):
+        """
+        Not implemented until metadata.json provided per ctree.
+        """
+        pass
+        # try:
+        #     return self.get_shtml().find("span", {"class":"pub-date-epub"}).find("span").text
+        # except:
+        #     return []
+
     def read_resultsxml(self, filename):
         """
         Reads a results xml,
@@ -202,17 +241,6 @@ class CTree(object):
                 print("%s is not available for %s, run ami-%s first." %(plugin, self.ID, plugin))
             else:
                 return self.results.get(plugin)
-    
-    def get_shtml(self):
-        """
-        Returns the scholarly.html as a BeautifulSoup object.
-        """
-        with open(self.shtmlpath, "r") as infile:
-            return BeautifulSoup(infile, "lxml")
-    
-    def get_fulltext_xml(self):
-        with open(self.fulltextxmlpath, "r") as infile:
-            return etree.parse(infile)
 
     def get_section(self, section_title):
         """

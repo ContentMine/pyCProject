@@ -39,8 +39,8 @@ def create_network(CProject, plugin, query):
               plugin = "string"
               query = "string"
         
-        Returns: (bipartite_graph, monopartite_graph, paper_nodes, fact_nodes)
-        >>> bipartiteGraph, factGraph, paperNodes, factNodes = create_network(CProject, "species", "binomial")
+        Returns: (bipartite_graph, monopartite_graph, fact_nodes, paper_nodes)
+        >>> bipartiteGraph, factGraph, paperGraph, fact_nodes, paper_nodes = create_network(CProject, "species", "binomial")
         """
         
         B = nx.Graph()
@@ -69,12 +69,13 @@ def create_network(CProject, plugin, query):
         
         paper_nodes = set(n for n,d in B.nodes(data=True) if d['bipartite']==0)
         fact_nodes = set(B) - paper_nodes
-        G = bipartite.weighted_projected_graph(B, fact_nodes)
+        fact_graph = bipartite.weighted_projected_graph(B, fact_nodes)
+        paper_graph = bipartite.weighted_projected_graph(B, paper_nodes)
         
-        return B, G, paper_nodes, fact_nodes
+        return B, fact_graph, paper_graph, fact_nodes, paper_nodes
     
 
-def plotGraph(graph, color="r", figsize=(12, 8)):
+def plotGraph(graph, color="blue", figsize=(12, 8)):
     
     labels = {n:n for n in graph.nodes()}
     
@@ -222,10 +223,10 @@ def create_complete_graph(CProject):
 
     paper_nodes = set(n for n,d in M.nodes(data=True) if d.get('bipartite')==0)
     fact_nodes = set(M) - paper_nodes
-    G = bipartite.weighted_projected_graph(M, fact_nodes)
-    H = bipartite.weighted_projected_graph(M, paper_nodes)
+    fact_graph = bipartite.weighted_projected_graph(M, fact_nodes)
+    paper_graph = bipartite.weighted_projected_graph(M, paper_nodes)
     
-    return M, G, H, paper_nodes, fact_nodes
+    return M, fact_graph, paper_graph, fact_nodes, paper_nodes
 
 
 def plotMultipartiteGraph(M, figsize=(60, 40)):
