@@ -14,8 +14,6 @@ setup(name='pycproject',
       packages=['pycproject'],
       install_requires=[
         'lxml',
-        'matplotlib',
-        'networkx',
         'beautifulsoup4'
       ],
       zip_safe=False)
