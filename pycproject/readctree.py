@@ -9,6 +9,7 @@ Provides basic function to read a ContentMine CProject and CTrees into python da
 # import file io
 import re
 import os
+import glob
 from lxml import etree
 import json
 from collections import Counter
@@ -119,7 +120,7 @@ class CTree(object):
         self.results = self._get_results()
         self.entities = self._load_entities()
         self.metadata = self._get_metadata()
-        self.first_publication_data = self.metadata.get("firstPublicationDate")
+        self.first_publication_date = self.metadata.get("firstPublicationDate")
 
     def _get_metadata(self):
         """
