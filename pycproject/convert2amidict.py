@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 
 def list2dict(itemlist, title):
-    # create XML 
+    # create XML
     root = etree.Element('root')
     root.tag = "dictionary"
     root.attrib["title"] = args.title
@@ -65,7 +65,7 @@ def main(args):
         itemlist = read_csv(args.inputfile)
     if args.action == "wordfreq2dict":
         itemlist = read_wordfreq_xml(args.inputfile)
-    
+
     cleaned_itemlist = clean_itemlist(itemlist)
     print("There are %d items in the dictionary." %len(cleaned_itemlist))
     root = list2dict(cleaned_itemlist, args.title)
