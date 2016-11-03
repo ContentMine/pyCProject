@@ -9,8 +9,10 @@ Provides basic function to read a ContentMine CProject and CTrees into python da
 # import file io
 import re
 import os
+import glob
 from lxml import etree
 import json
+from collections import Counter
 
 # import data handling
 from bs4 import BeautifulSoup
@@ -19,7 +21,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.2"
+__version__ = "0.0.4.dev"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -35,10 +37,10 @@ class CProject(object):
         self.projectname = projectname
         self.projectfolder = os.path.join(projectpath, projectname)
         self.size = self.get_size()
-    
+
     def get_ctrees(self):
         return iter(self)
-    
+
     def get_size(self):
         return len(self)
 
@@ -47,7 +49,7 @@ class CProject(object):
         Return a CTree object by its ID.
         """
         return CTree(self.projectfolder, ctreeID)
-        
+
     def get_title(self, ctreeID):
         """
         Returns the title of a paper by its ID.
@@ -65,6 +67,7 @@ class CProject(object):
                     for result in results:
                         result["plugin"] = plugin
                         result["type"] = ptype
+                        result["ID"] = ctree.ID
                         yield result
 
     def __len__(self):
@@ -80,15 +83,15 @@ class CProject(object):
 
         Yields: CTree
         """
-        for dir_entry in os.scandir(self.projectfolder):
-            if dir_entry.is_dir():
-                ctree = CTree(self.projectfolder, dir_entry.name)
+        for dir_entry in os.listdir(self.projectfolder):
+            if os.path.isdir(os.path.join(self.projectfolder, dir_entry)):
+                ctree = CTree(self.projectfolder, dir_entry)
                 yield ctree
 
     def __repr__(self):
         return '<CProject: {}>'.format(self.projectname)
 
-        
+
 class CTree(object):
     """
     Reads a CTREE within a CProject,
@@ -98,14 +101,14 @@ class CTree(object):
     self.shtmlpath = "path/to/scholarly.html"
     self.fulltextxmlpath = "path/to/fulltext.xml"
     self.available_plugins = []
-    self.plugin_queries = {'regex': set(['regexname']), 
-                           'gene': set(['human']), 
+    self.plugin_queries = {'regex': set(['regexname']),
+                           'gene': set(['human']),
                            'sequence': set(['carb3', 'prot3', 'dna', 'prot']),
                            'species':set([binomial, genus, genussp])}
     self.results = {'species':{'binomial':[list_of_dicts]}}
     self.entities = {"PERSON": [], "LOCATION": [], "ORGANIZATION": []}
     """
-    
+
     def __init__(self, projectfolder, ctreeID):
         self.path = os.path.join(projectfolder, ctreeID)
         self.ID = ctreeID
@@ -116,7 +119,17 @@ class CTree(object):
         self.plugin_queries = self._get_queries()
         self.results = self._get_results()
         self.entities = self._load_entities()
-    
+        self.metadata = self._get_metadata()
+        self.first_publication_date = self.metadata.get("firstPublicationDate")
+
+    def _get_metadata(self):
+        """
+
+        """
+        resultsjsonfile = glob.glob(os.path.join(self.path, "*result.json"))[0]
+        with open(resultsjsonfile) as infile:
+            return json.load(infile)
+
     def _load_entities(self):
         """
         Tries to load entities, returns {} if none found.
@@ -127,16 +140,16 @@ class CTree(object):
         except:
             # needs logging for missing entity results
             return {}
-    
+
     def _get_shtmlpath(self):
         return os.path.join(self.path, "scholarly.html")
-    
+
     def _get_fxmlpath(self):
         return os.path.join(self.path, "fulltext.xml")
-    
+
     def _get_plugins(self):
         """
-        Returns a dict of available ami-plugin-results.
+        Returns a list of available ami-plugin-results.
         ['sequence', 'regex', 'gene']
         """
         try:
@@ -144,21 +157,21 @@ class CTree(object):
         except:
             # needs logging of missing plugin-results
             return []
-    
+
     def _get_queries(self):
         """
         Returns a dict of plugin:types,
         where plugin is an ami-plugin and types are the
         queries that have been run.
-        {'regex': set(['clintrialids']), 
-        'gene': set(['human']), 
+        {'regex': set(['clintrialids']),
+        'gene': set(['human']),
         'sequence': set(['carb3', 'prot3', 'dna', 'prot']),
         'species': set(['binomial', 'genus', 'genussp'])}
         """
-        return {plugin:set(os.listdir(os.path.join(self.resultspath, plugin))) 
+        return {plugin:set(os.listdir(os.path.join(self.resultspath, plugin)))
             for plugin in self.available_plugins}
-            
-    
+
+
     def _get_results(self):
         results = {}
         for plugin, queries in self.plugin_queries.items():
@@ -170,7 +183,7 @@ class CTree(object):
                                                                  query,
                                                                  "results.xml"))
         return results
-        
+
     def read_resultsxml(self, filename):
         """
         Reads a results xml,
@@ -185,7 +198,7 @@ class CTree(object):
         except:
             # needs logging of missing results.xml
             return []
-    
+
     def show_results(self, plugin):
         """
         Returns ami-plugin results as a dictionary with
@@ -201,20 +214,24 @@ class CTree(object):
                 print("%s is not available for %s, run ami-%s first." %(plugin, self.ID, plugin))
             else:
                 return self.results.get(plugin)
-    
-    def get_soup(self):
+
+    def get_shtml(self):
         """
         Returns the scholarly.html as a BeautifulSoup object.
         """
         with open(self.shtmlpath, "r") as infile:
-            return BeautifulSoup(infile)
-    
+            return BeautifulSoup(infile, "lxml")
+
+    def get_fulltext_xml(self):
+        with open(self.fulltextxmlpath, "r") as infile:
+            return etree.parse(infile)
+
     def get_section(self, section_title):
         """
         Returns a section of shtml.
         """
         section = []
-        for sec in self.get_soup().find_all():
+        for sec in self.get_shtml().find_all():
             if sec.string == section_title:
                 for sib in sec.next_siblings:
                     section.append(sib.string)
@@ -225,22 +242,41 @@ class CTree(object):
             # needs logging of empty section for document
             section = ""
         return section
-        
+
     def get_authors(self):
         """
         Searches the scholarly.html for the contrib-group tag,
         returns a list of authors.
         """
         authors = []
-        contrib_group = self.get_soup().find_all("div", {"tagx":"contrib-group"})
-        for meta in contrib_group:
-            for author in meta.find_all("meta", {"name":"citation_author"}):
-                authors.append(author.get("content"))
+        contrib_group = self.get_shtml().find_all("div", {"class":"contrib-group"})
+        for contrib in contrib_group:
+            for author in contrib.find_all("span", {"class":"citation_author"}):
+                authors.append(author.string)
         return authors
-    
+
+    def get_keywords(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        keywords = [kwd.text for kwd in self.get_fulltext_xml().getroot().xpath("//kwd")]
+        return keywords
+
+    def get_institutions(self):
+        """
+        Searches the scholarly.html for the contrib-group tag,
+        returns a list of authors.
+        """
+        institutions = []
+        return institutions
+
+    def get_journal(self):
+        return self.get_fulltext_xml().getroot().xpath("//journal-title/text()")[0]
+
     def get_acknowledgements(self):
         return self.get_section("Acknowledgements")
-    
+
     def query_soup(self, tag, text):
         """
         Finds tags containing a certain text,
@@ -249,8 +285,8 @@ class CTree(object):
               text = "string"
         Returns: [bs4.tag, bs4.tag, bs4.tag3]
         """
-        return self.get_soup().find_all(tag, text = re.compile(text))
-    
+        return self.get_shtml().find_all(tag, text = re.compile(text))
+
     def find_tag(self, tag, attr=None):
         """
         Searches the scholarly.html for a specific tag,
@@ -261,16 +297,16 @@ class CTree(object):
         """
         text = [""]
         if attr is not None:
-            tags = self.get_soup().find(tag, attr)
+            tags = self.get_shtml().find(tag, attr)
         else:
-            tags = self.get_soup().find(tag)
+            tags = self.get_shtml().find(tag)
         if tags:
             for p in tags.find_all("p"):
                 if p.string:
                     text.append(p.string)
         text = " ".join(text)
         return " ".join(text.split())
-    
+
     def get_competing_interests(self):
         """
         Searches the scholarly.html for a section leading in with
@@ -287,7 +323,7 @@ class CTree(object):
             text = ""
         text = " ".join(text.split())
         return text
-    
+
     def get_abstract(self):
         """
         Searches the scholarly.html for the attribute "abstract",
@@ -295,7 +331,7 @@ class CTree(object):
         Returns: "string"
         """
         abstract = []
-        for ab in self.get_soup().find_all("div", {"tag":"abstract"}):
+        for ab in self.get_shtml().find_all("div", {"tag":"abstract"}):
             for p in ab.find_all("p"):
                 abstract.append(p.string)
         try:
@@ -303,14 +339,44 @@ class CTree(object):
         except:
             # needs logging for missing abstract in document
             return ""
-    
+
     def get_title(self):
         """
         Searches the scholarly.html for the "title" tag,
         returns the corresponding string.
         Returns: "string"
         """
-        return self.get_soup().find("title").string
+        return self.get_fulltext_xml().getroot().xpath("//article-title/text()")[0]
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
+
+    def get_classifier_features(self):
+        """
+        Yields feature dictionaries:
+
+        {'ID': ['PMC4427447'],
+          'authors': ['Kraisak Kesorn',
+           'Phatsavee Ongruk',
+           'Jakkrawarn Chompoosri',
+           'Atchara Phumee',
+           'Usavadee Thavara',
+           'Apiwat Tawatsin',
+           'Padet Siriyasatien'],
+          'binomial': [('Ae. aegypti', 20),
+           ('Aedes aegypti', 2),
+           ('Model construction', 1),
+           ('Data integration', 1)],
+          'journal': ['PLoS ONE'],
+          'keywords': [],
+          'title': ['Morbidity Rate Prediction of Dengue Hemorrhagic Fever (DHF) Using the Support Vector Machine and the ']
+        }
+        """
+        features = {}
+        features["authors"] = self.get_authors()
+        features["title"] = [self.get_title()]
+        features["keywords"] = self.get_keywords()
+        features["journal"] = [self.get_journal()]
+        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")]).most_common(5)
+        features["ID"] = [self.ID]
+        return features
