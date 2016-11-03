@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.4.dev"
+__version__ = "0.0.5.dev"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -126,7 +126,7 @@ class CTree(object):
         """
 
         """
-        resultsjsonfile = glob.glob(os.path.join(self.path, "*result.json"))[0]
+        resultsjsonfile = os.path.join(self.path, "eupmc_result.json")
         with open(resultsjsonfile) as infile:
             return json.load(infile)
 
@@ -183,6 +183,7 @@ class CTree(object):
                                                                  query,
                                                                  "results.xml"))
         return results
+
 
     def read_resultsxml(self, filename):
         """
@@ -346,7 +347,8 @@ class CTree(object):
         returns the corresponding string.
         Returns: "string"
         """
-        return self.get_fulltext_xml().getroot().xpath("//article-title/text()")[0]
+        return self.metadata.get("title")[0]
+
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)

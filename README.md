@@ -6,24 +6,30 @@ Main use is to read in all results.xml created by ami, and to be relate them to 
 
 # Installation
 
-You can install it from PyPI with
+* You can install it from PyPI with
 
 ```
 pip install pycproject
 ```
 
-Another option is to install it into a [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
+* Another option is to install it into a [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
 
 ```
 source activate YOURVIRTUALENV
 pip install pycproject
 ```
 
-Download and unzip the [source from github](https://github.com/ContentMine/pyCProject/archive/master.zip), change into the unzipped folder, then run
+* Download and unzip the [source from github](https://github.com/ContentMine/pyCProject/archive/master.zip), change into the unzipped folder, then run
 
 ```
 python setup.py build
 python setup.py install
+```
+
+# converting to json-dumps
+
+```
+python3 pycproject/convert2elasticdump.py --raw PATH/TO/CPROJECT --name CPROJECTNAME --output PATH/TO/OUTPUTFOLDER
 ```
 
 # Usage
