@@ -28,6 +28,7 @@ python setup.py install
 
 # converting to json-dumps
 
+If your cproject is in `PATH/TO/CPROJECT/CPROJECTNAME`, call the script with
 ```
 python3 pycproject/convert2elasticdump.py --raw PATH/TO/CPROJECT --name CPROJECTNAME --output PATH/TO/OUTPUTFOLDER
 ```
@@ -40,3 +41,12 @@ You can then read a generated ContentMine-project in with
 from pycproject.readctree import CProject
 MYPROJECT = CProject("path_to_cproject", "cproject_name")
 ```
+
+You can work with a pandas DataFrame after creating it with
+```
+df = MYPROJECT.get_dataframe()
+```
+
+# DEPRECATION WARNING
+
+Visualization / network analysis in factnet.py will is no longer supported or maintained in this package as it is not part of the core functionality, and will be removed.

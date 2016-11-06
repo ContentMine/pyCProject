@@ -35,6 +35,10 @@ def write_metadatajson(cproject, outputfolder):
             outfile.write(json.dumps(raw)+"\n")
 
 def main(args):
+    """
+    If your cproject is in PATH/TO/CPROJECT/CPROJECTNAME, call the script with
+    python3 pycproject/convert2elasticdump.py --raw PATH/TO/CPROJECT --name CPROJECTNAME --output PATH/TO/OUTPUTFOLDER
+    """
     cproject = CProject(args.raw, args.name)
     write_factjson(cproject, args.output)
     write_metadatajson(cproject, args.output)
