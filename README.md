@@ -28,6 +28,7 @@ python setup.py install
 
 # converting to json-dumps
 
+If your cproject is in `PATH/TO/CPROJECT/CPROJECTNAME`, call the script with
 ```
 python3 pycproject/convert2elasticdump.py --raw PATH/TO/CPROJECT --name CPROJECTNAME --output PATH/TO/OUTPUTFOLDER
 ```
