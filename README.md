@@ -40,3 +40,8 @@ You can then read a generated ContentMine-project in with
 from pycproject.readctree import CProject
 MYPROJECT = CProject("path_to_cproject", "cproject_name")
 ```
+
+You can work with a pandas DataFrame after creating it with
+```
+df = MYPROJECT.get_dataframe()
+```
