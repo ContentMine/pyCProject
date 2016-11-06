@@ -13,6 +13,7 @@ import glob
 from lxml import etree
 import json
 from collections import Counter
+import pandas as pd
 
 # import data handling
 from bs4 import BeautifulSoup
@@ -21,7 +22,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.5.dev"
+__version__ = "0.0.6.dev"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -69,6 +70,14 @@ class CProject(object):
                         result["type"] = ptype
                         result["ID"] = ctree.ID
                         yield result
+
+    def get_dataframe(self):
+        df = pd.DataFrame()
+        for result in self.get_results():
+            if (result.get("type") != "word" and result.get("exact") is not None):
+                df = df.append(pd.DataFrame.from_dict(result, "index").T)
+        return df
+
 
     def __len__(self):
         """
