@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.6.dev"
+__version__ = "0.1.0"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -361,33 +361,3 @@ class CTree(object):
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
-
-    def get_classifier_features(self):
-        """
-        Yields feature dictionaries:
-
-        {'ID': ['PMC4427447'],
-          'authors': ['Kraisak Kesorn',
-           'Phatsavee Ongruk',
-           'Jakkrawarn Chompoosri',
-           'Atchara Phumee',
-           'Usavadee Thavara',
-           'Apiwat Tawatsin',
-           'Padet Siriyasatien'],
-          'binomial': [('Ae. aegypti', 20),
-           ('Aedes aegypti', 2),
-           ('Model construction', 1),
-           ('Data integration', 1)],
-          'journal': ['PLoS ONE'],
-          'keywords': [],
-          'title': ['Morbidity Rate Prediction of Dengue Hemorrhagic Fever (DHF) Using the Support Vector Machine and the ']
-        }
-        """
-        features = {}
-        features["authors"] = self.get_authors()
-        features["title"] = [self.get_title()]
-        features["keywords"] = self.get_keywords()
-        features["journal"] = [self.get_journal()]
-        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")]).most_common(5)
-        features["ID"] = [self.ID]
-        return features
