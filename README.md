@@ -46,7 +46,3 @@ You can work with a pandas DataFrame after creating it with
 ```
 df = MYPROJECT.get_dataframe()
 ```
-
-# DEPRECATION WARNING
-
-Visualization / network analysis in factnet.py will is no longer supported or maintained in this package as it is not part of the core functionality, and will be removed.
