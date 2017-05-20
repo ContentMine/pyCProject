@@ -78,6 +78,64 @@ class CProject(object):
                 df = df.append(pd.DataFrame.from_dict(result, "index").T)
         return df
 
+    def get_pub_years(self, min_year=3000, max_year=0):
+        years_list = []
+        final_years_list = []
+
+        years = pd.Series()
+        for ctree in self.get_ctrees():
+            year = str(ctree.first_publication_date)[2:6]
+            if int(year) < min_year:
+                min_year = int(year)
+            if int(year) > max_year:
+                max_year = int(year)
+            if year in years:
+                years[year] += 1
+            else:
+                years[year] = 1
+        years_list.append(years)
+
+        for years in years_list:
+            final_years = pd.Series()
+
+            for i in range(max_year - min_year + 1):
+                if str(min_year + i) in years:
+                    final_years[str(min_year + i)] = years[str(min_year + i)]
+                else:
+                    final_years[str(min_year + i)] = 0
+
+            final_years_list.append(final_years.sort_index())
+        return final_years_list
+
+    def get_authors(self):
+        authors = Counter()
+        for ctree in self.get_ctrees():
+            if 'authorList' in ctree.metadata:
+                #print(ctree.metadata['authorList'][0]['author'])
+                ctree_authors = ctree.metadata['authorList'][0]['author']
+                for ctree_author in ctree_authors:
+                    if 'fullName' in ctree_author:
+                        authors.update(ctree_author['fullName'])
+        return authors
+
+    def get_journals(self):
+        journals = Counter()
+        for ctree in self.get_ctrees():
+            if 'journalInfo' in ctree.metadata:
+                #print(ctree.metadata['authorList'][0]['author'])
+                ctree_journals = ctree.metadata['journalInfo'][0]['journal']
+                for ctree_journal in ctree_journals:
+                    if 'title' in ctree_journal:
+                        journals.update(ctree_journal['title'])
+        return journals
+
+    def get_word_frequencies(self):
+        words = Counter()
+        for ctree in self.get_ctrees():
+            if 'word' in ctree.results:
+                for word in ctree.results['word']['frequencies']:
+                    words.update({word['word'], int(word['count'])})
+        return words
 
     def __len__(self):
         """
@@ -357,7 +415,6 @@ class CTree(object):
         Returns: "string"
         """
         return self.metadata.get("title")[0]
-
 
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
