@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -92,33 +92,29 @@ class CProject(object):
         max_year : int
             Set upper threshold
         """
-        years_list = []
-        final_years_list = []
-
-        years = pd.Series()
-        for ctree in self.get_ctrees():
-            year = str(ctree.first_publication_date)[2:6]
-            if int(year) < min_year:
-                min_year = int(year)
-            if int(year) > max_year:
-                max_year = int(year)
+        years_counter = (int(ct.first_publication_date[0][0:4]) for ct in self.get_ctrees())
+        years = Counter()
+        for year in years_counter:
+            if year < min_year:
+                min_year = year
+            if year > max_year:
+                max_year = year
             if year in years:
                 years[year] += 1
             else:
                 years[year] = 1
-        years_list.append(years)
 
-        for years in years_list:
-            final_years = pd.Series()
+        final_years = Counter()
+        for i in range(max_year - min_year + 1):
+            if min_year + i in years:
+                final_years[min_year + i] = years[min_year + i]
+            else:
+                final_years[min_year + i] = 0
 
-            for i in range(max_year - min_year + 1):
-                if str(min_year + i) in years:
-                    final_years[str(min_year + i)] = years[str(min_year + i)]
-                else:
-                    final_years[str(min_year + i)] = 0
+        series = pd.Series(final_years)
+        series.sort_index(inplace=True)
 
-            final_years_list.append(final_years.sort_index())
-        return final_years_list
+        return series
 
     def get_authors(self):
         """Returns collections.Counter of authors and publication counts."""

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='pycproject',
-      version='0.1.0',
+      version='0.1.1',
       description='Provides basic function to read a ContentMine CProject and CTrees into python datastructures.',
       url='http://github.com/ContentMine/pyCProject',
       author='Christopher Kittel',
