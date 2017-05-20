@@ -72,6 +72,10 @@ class CProject(object):
                         yield result
 
     def get_dataframe(self):
+        """
+        Returns pandas.DataFrame with columns
+        ['ID', 'exact', 'match', 'name', 'plugin', 'post', 'pre', 'type', 'xpath']
+        """
         df = pd.DataFrame()
         for result in self.get_results():
             if (result.get("type") != "word" and result.get("exact") is not None):
@@ -79,6 +83,15 @@ class CProject(object):
         return df
 
     def get_pub_years(self, min_year=3000, max_year=0):
+        """Returns pandas.Series of years and number of publications.
+
+        Parameters
+        ----------
+        min_year : int
+            Set lower threshold
+        max_year : int
+            Set upper threshold
+        """
         years_list = []
         final_years_list = []
 
@@ -108,6 +121,7 @@ class CProject(object):
         return final_years_list
 
     def get_authors(self):
+        """Returns collections.Counter of authors and publication counts."""
         authors = Counter()
         for ctree in self.get_ctrees():
             if 'authorList' in ctree.metadata:
@@ -119,6 +133,7 @@ class CProject(object):
         return authors
 
     def get_journals(self):
+        """Returns collections.Counter of journals and article counts."""
         journals = Counter()
         for ctree in self.get_ctrees():
             if 'journalInfo' in ctree.metadata:
@@ -130,6 +145,7 @@ class CProject(object):
         return journals
 
     def get_word_frequencies(self):
+        """Returns collections.Counter of words and frequency counts."""
         words = Counter()
         for ctree in self.get_ctrees():
             if 'word' in ctree.results:
@@ -271,8 +287,11 @@ class CTree(object):
         """
         Returns ami-plugin results as a dictionary with
         {plugin-type: [list of results]}
-        Args: plugin = "string", one of ["gene", "sequence", "regex", "species"]
-        Returns: list of results
+
+        Parameters
+        ----------
+        plugin : str,
+            One of "gene", "sequence", "regex", "species"
         """
         # catch entities request first, since not official plugin
         if plugin == "entities":
