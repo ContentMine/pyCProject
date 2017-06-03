@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='pycproject',
-      version='0.1.1',
+      version='0.1.3',
       description='Provides basic function to read a ContentMine CProject and CTrees into python datastructures.',
       url='http://github.com/ContentMine/pyCProject',
       author='Christopher Kittel',
@@ -13,7 +13,7 @@ setup(name='pycproject',
       license='MIT',
       packages=['pycproject'],
       install_requires=[
-        'lxml==3.6.0',
+        'lxml>=3.6.0',
         'beautifulsoup4==4.4.1',
         'pandas==0.19.2'
       ],

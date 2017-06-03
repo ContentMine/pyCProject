@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
