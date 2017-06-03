@@ -3,6 +3,10 @@ Provides basic function to read a ContentMine [CProject](https://github.com/Cont
 
 Main use is to read in all results.xml created by ami, and to be relate them to papers/metadata.
 
+# DEPRECATION WARNING
+
+Visualization / network analysis in factnet.py will is no longer supported or maintained in this package as it is not part of the core functionality, and will be removed.
+
 
 # Installation
 
@@ -46,3 +50,4 @@ You can work with a pandas DataFrame after creating it with
 ```
 df = MYPROJECT.get_dataframe()
 ```
+

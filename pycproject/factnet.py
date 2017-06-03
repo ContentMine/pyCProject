@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
+DEPRECATION WARNING
+
+Visualization / network analysis in factnet.py will is no longer supported or maintained in this package as it is not part of the core functionality, and will be removed.
+
+
 Provides basic network plotting functions for a CProject.
 """
 
@@ -34,15 +39,15 @@ def create_network(CProject, plugin, query):
         for "sequences" it is one of ["carb3", "prot3", "dna", "prot"]
         for "gene" it is "human"
         for "regex" it is "regexname".
-        
+
         Args: CProject object
               plugin = "string"
               query = "string"
-        
+
         Returns: (bipartite_graph, monopartite_graph, fact_nodes, paper_nodes)
         >>> bipartiteGraph, factGraph, paperGraph, fact_nodes, paper_nodes = create_network(CProject, "species", "binomial")
         """
-        
+
         B = nx.Graph()
         labels = {}
 
@@ -67,14 +72,14 @@ def create_network(CProject, plugin, query):
                     # add a link between a paper and author
                     B.add_edge(source, exact)
 
-        
+
         paper_nodes = set(n for n,d in B.nodes(data=True) if d['bipartite']==0)
         fact_nodes = set(B) - paper_nodes
         fact_graph = bipartite.weighted_projected_graph(B, fact_nodes)
         paper_graph = bipartite.weighted_projected_graph(B, paper_nodes)
-        
+
         return B, fact_graph, paper_graph, fact_nodes, paper_nodes
-    
+
 
 def plotGraph(graph, color="blue", figsize=(12, 8), layout='neato'):
     """
@@ -89,40 +94,40 @@ def plotGraph(graph, color="blue", figsize=(12, 8), layout='neato'):
 
     """
     labels = {n:n for n in graph.nodes()}
-    
+
     d = nx.degree_centrality(graph)
-    
+
     # layout=nx.spring_layout
     # pos=layout(graph)
     pos = nx.drawing.nx_agraph.graphviz_layout(graph,prog=layout)
 
     plt.figure(figsize=figsize)
     plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
-    
+
     # nodes
     nx.draw_networkx_nodes(graph,pos,
                             nodelist=graph.nodes(),
                             node_color=color,
                             node_size=[v * 250 for v in d.values()],
                             alpha=0.8)
-                            
+
     nx.draw_networkx_edges(graph,pos,
                            with_labels=False,
                            edge_color=color,
                            width=0.50
                         )
-    
+
     if graph.order() < 1000:
         nx.draw_networkx_labels(graph,pos, labels)
     return plt
-    
+
 
 def plotBipartiteGraph(graph, color1="r", color2="b", figsize=(12, 8), layout="neato"):
- 
+
     labels = {n:n for n in graph.nodes()}
-    
+
     d = nx.degree_centrality(graph)
-    
+
     # layout=nx.spring_layout
     # pos=layout(graph)
     pos = nx.drawing.nx_agraph.graphviz_layout(graph,prog=layout)
@@ -131,7 +136,7 @@ def plotBipartiteGraph(graph, color1="r", color2="b", figsize=(12, 8), layout="n
 
     plt.figure(figsize=figsize)
     plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
-    
+
     # nodes
     nx.draw_networkx_nodes(graph,pos,
                             nodelist=bot_nodes,
@@ -143,24 +148,24 @@ def plotBipartiteGraph(graph, color1="r", color2="b", figsize=(12, 8), layout="n
                             node_color=color2,
                             node_size=[v * 350 for v in d.values()],
                             alpha=0.8)
-    
+
     nx.draw_networkx_edges(graph,pos,
                            with_labels=True,
                            edge_color=color1,
                            width=1.0
                         )
-    
+
     if graph.order() < 1000:
         nx.draw_networkx_labels(graph,pos, labels)
-        
+
     return plt
 
-    
+
 def create_subgraph(cproject, B, G, target):
-    
+
     sg = nx.Graph()
     sg.add_node(target)
-    
+
     for ID in B.neighbors(target):
         sg.add_node(ID)
         sg.add_edge(target, ID)
@@ -168,7 +173,7 @@ def create_subgraph(cproject, B, G, target):
             if not author in sg.nodes():
                 sg.add_node(author)
             sg.add_edge(ID, author)
-            
+
     for neighbor in G.neighbors(target):
         sg.add_node(neighbor)
         sg.add_edge(target, neighbor)
@@ -179,7 +184,7 @@ def create_subgraph(cproject, B, G, target):
                 if not author in sg.nodes():
                     sg.add_node(author)
                 sg.add_edge(ID, author)
-    
+
     return sg
 
 def save_graph(graph, color, filename, figsize=(36, 24), layout="neato"):
@@ -193,18 +198,18 @@ def create_complete_graph(CProject):
     Args: CProject
     Returns: (bipartite_graph, monopartite_fact_graph, monopartite_paper_graph, paper_nodes, fact_nodes)
     """
-        
+
     partition_mapping = {"papers":0,
                          "binomial":1, "genus":2, "genussp":3,
                          "carb3":4, "prot3":5, "dna":6, "prot":7,
                          "human":8}
-    
+
     gene = ["human"]
     species = ["binomial"]
     sequence = ["dna", "prot"]
     plugins = {"gene":gene, "species": species, "sequence":sequence}
-    
-    
+
+
     M = nx.Graph()
     labels = {}
 
@@ -212,7 +217,7 @@ def create_complete_graph(CProject):
 
         for plugin, types in plugins.items():
             for ptype in types:
-        
+
                 try:
                     results = ctree.show_results(plugin).get(ptype, [])
                 except AttributeError:
@@ -238,7 +243,7 @@ def create_complete_graph(CProject):
     fact_nodes = set(M) - paper_nodes
     fact_graph = bipartite.weighted_projected_graph(M, fact_nodes)
     paper_graph = bipartite.weighted_projected_graph(M, paper_nodes)
-    
+
     return M, fact_graph, paper_graph, fact_nodes, paper_nodes
 
 
@@ -256,18 +261,18 @@ def plotMultipartiteGraph(M, figsize=(60, 40), layout="neato"):
                     "binomial":"green", "genus":2, "genussp":3,
                     "carb3":4, "prot3":5, "dna":"orange", "prot":"cyan",
                     "human":"pink"}
-        
+
     labels = {n:n for n in M.nodes()}
-    
+
     d = nx.degree_centrality(M)
-    
+
     # layout=nx.spring_layout
     # pos=layout(graph)
     pos = nx.drawing.nx_agraph.graphviz_layout(M,prog=layout)
 
     plt.figure(figsize=figsize)
     plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
-    
+
     paper_nodes = set(n for n,d in M.nodes(data=True) if d.get('bipartite')==0)
     # paper nodes
     nx.draw_networkx_nodes(M,pos,
@@ -275,7 +280,7 @@ def plotMultipartiteGraph(M, figsize=(60, 40), layout="neato"):
                             node_color="blue",
                             node_size=[v * 350 for v in d.values()],
                             alpha=0.8)
-    
+
     # nodes
     for plugin, types in plugins.items():
         for ptype in types:
@@ -285,16 +290,16 @@ def plotMultipartiteGraph(M, figsize=(60, 40), layout="neato"):
                                     node_color=color_mapping.get(ptype),
                                     node_size=[v * 350 for v in d.values()],
                                     alpha=0.8)
-    
+
     nx.draw_networkx_edges(M,pos,
                            with_labels=True,
                            edge_color="black",
                            width=0.5
                         )
-    
+
     if M.order() < 1000:
         nx.draw_networkx_labels(M,pos, labels)
-        
+
     return plt
 
 
@@ -312,18 +317,18 @@ def plot_all_facts(G, figsize=(60, 40), layout="neato"):
                     "binomial":"green", "genus":2, "genussp":3,
                     "carb3":4, "prot3":5, "dna":"orange", "prot":"cyan",
                     "human":"pink"}
-        
+
     labels = {n:n for n in G.nodes()}
-    
+
     d = nx.degree_centrality(G)
-    
+
     # layout=nx.spring_layout
     # pos=layout(graph)
     pos = nx.drawing.nx_agraph.graphviz_layout(G,prog=layout)
 
     plt.figure(figsize=figsize)
     plt.subplots_adjust(left=0,right=1,bottom=0,top=0.95,wspace=0.01,hspace=0.01)
-    
+
     # nodes
     for plugin, types in plugins.items():
         for ptype in types:
@@ -333,14 +338,14 @@ def plot_all_facts(G, figsize=(60, 40), layout="neato"):
                                     node_color=color_mapping.get(ptype),
                                     node_size=[v * 350 for v in d.values()],
                                     alpha=0.8)
-    
+
     nx.draw_networkx_edges(G,pos,
                            with_labels=True,
                            edge_color="black",
                            width=0.5
                         )
-    
+
     if G.order() < 1000:
         nx.draw_networkx_labels(G,pos, labels)
-        
+
     return plt

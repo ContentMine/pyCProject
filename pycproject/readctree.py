@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 __author__ = "Christopher Kittel"
 __copyright__ = "Copyright 2015"
 __license__ = "MIT"
-__version__ = "0.0.6.dev"
+__version__ = "0.1.3"
 __maintainer__ = "Christopher Kittel"
 __email__ = "web@christopherkittel.eu"
 __status__ = "Prototype" # 'Development', 'Production' or 'Prototype'
@@ -72,12 +72,82 @@ class CProject(object):
                         yield result
 
     def get_dataframe(self):
+        """
+        Returns pandas.DataFrame with columns
+        ['ID', 'exact', 'match', 'name', 'plugin', 'post', 'pre', 'type', 'xpath']
+        """
         df = pd.DataFrame()
         for result in self.get_results():
             if (result.get("type") != "word" and result.get("exact") is not None):
                 df = df.append(pd.DataFrame.from_dict(result, "index").T)
         return df
 
+    def get_pub_years(self, min_year=3000, max_year=0):
+        """Returns pandas.Series of years and number of publications.
+
+        Parameters
+        ----------
+        min_year : int
+            Set lower threshold
+        max_year : int
+            Set upper threshold
+        """
+        years_counter = (int(ct.first_publication_date[0][0:4]) for ct in self.get_ctrees())
+        years = Counter()
+        for year in years_counter:
+            if year < min_year:
+                min_year = year
+            if year > max_year:
+                max_year = year
+            if year in years:
+                years[year] += 1
+            else:
+                years[year] = 1
+
+        final_years = Counter()
+        for i in range(max_year - min_year + 1):
+            if min_year + i in years:
+                final_years[min_year + i] = years[min_year + i]
+            else:
+                final_years[min_year + i] = 0
+
+        series = pd.Series(final_years)
+        series.sort_index(inplace=True)
+
+        return series
+
+    def get_authors(self):
+        """Returns collections.Counter of authors and publication counts."""
+        authors = Counter()
+        for ctree in self.get_ctrees():
+            if 'authorList' in ctree.metadata:
+                #print(ctree.metadata['authorList'][0]['author'])
+                ctree_authors = ctree.metadata['authorList'][0]['author']
+                for ctree_author in ctree_authors:
+                    if 'fullName' in ctree_author:
+                        authors.update(ctree_author['fullName'])
+        return authors
+
+    def get_journals(self):
+        """Returns collections.Counter of journals and article counts."""
+        journals = Counter()
+        for ctree in self.get_ctrees():
+            if 'journalInfo' in ctree.metadata:
+                #print(ctree.metadata['authorList'][0]['author'])
+                ctree_journals = ctree.metadata['journalInfo'][0]['journal']
+                for ctree_journal in ctree_journals:
+                    if 'title' in ctree_journal:
+                        journals.update(ctree_journal['title'])
+        return journals
+
+    def get_word_frequencies(self):
+        """Returns collections.Counter of words and frequency counts."""
+        words = Counter()
+        for ctree in self.get_ctrees():
+            if 'word' in ctree.results:
+                for word in ctree.results['word']['frequencies']:
+                    words.update({word['word'], int(word['count'])})
+        return words
 
     def __len__(self):
         """
@@ -213,8 +283,11 @@ class CTree(object):
         """
         Returns ami-plugin results as a dictionary with
         {plugin-type: [list of results]}
-        Args: plugin = "string", one of ["gene", "sequence", "regex", "species"]
-        Returns: list of results
+
+        Parameters
+        ----------
+        plugin : str,
+            One of "gene", "sequence", "regex", "species"
         """
         # catch entities request first, since not official plugin
         if plugin == "entities":
@@ -358,36 +431,5 @@ class CTree(object):
         """
         return self.metadata.get("title")[0]
 
-
     def __repr__(self):
         return '<CTree: {}>'.format(self.ID)
-
-    def get_classifier_features(self):
-        """
-        Yields feature dictionaries:
-
-        {'ID': ['PMC4427447'],
-          'authors': ['Kraisak Kesorn',
-           'Phatsavee Ongruk',
-           'Jakkrawarn Chompoosri',
-           'Atchara Phumee',
-           'Usavadee Thavara',
-           'Apiwat Tawatsin',
-           'Padet Siriyasatien'],
-          'binomial': [('Ae. aegypti', 20),
-           ('Aedes aegypti', 2),
-           ('Model construction', 1),
-           ('Data integration', 1)],
-          'journal': ['PLoS ONE'],
-          'keywords': [],
-          'title': ['Morbidity Rate Prediction of Dengue Hemorrhagic Fever (DHF) Using the Support Vector Machine and the ']
-        }
-        """
-        features = {}
-        features["authors"] = self.get_authors()
-        features["title"] = [self.get_title()]
-        features["keywords"] = self.get_keywords()
-        features["journal"] = [self.get_journal()]
-        features["binomial"] = Counter([r.get("exact") for r in self.results.get("species").get("binomial")]).most_common(5)
-        features["ID"] = [self.ID]
-        return features
