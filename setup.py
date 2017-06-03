@@ -14,7 +14,7 @@ setup(name='pycproject',
       packages=['pycproject'],
       install_requires=[
         'lxml>=3.5.0',
-        'beautifulsoup4==4.4.1',
-        'pandas==0.19.2'
+        'beautifulsoup4>=4.4.1',
+        'pandas>=0.19.2'
       ],
       zip_safe=False)
